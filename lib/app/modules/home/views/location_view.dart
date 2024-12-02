@@ -1,83 +1,91 @@
-import 'package:fashionista/app/modules/home/controllers/location_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:latlong2/latlong.dart';
-import 'package:permission_handler/permission_handler.dart';
+import '../controllers/location_controller.dart';
 
-class LocationView extends StatelessWidget {
-  final LocationController locationController = Get.put(LocationController());
+class LokasiView extends GetView<LokasiController> {
+  final LokasiController locationController = Get.put(LokasiController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF9F9F9), 
       appBar: AppBar(
-        title: Text('Lokasi Pengguna'),
+        backgroundColor: const Color(0xFF003366), 
+        title: const Text(
+          "Geolocation and Maps",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: () => locationController.getCurrentLocation(),
+          ),
+        ],
       ),
-      body: Obx(() {
-        // Cek apakah data posisi pengguna sudah ada.
-        if (locationController.currentPosition.value == null ||
-            locationController.initialPosition.value == null) {
-          return Center(child: CircularProgressIndicator());
-        } else {
-          // Jika data lokasi tersedia, tampilkan informasi dan peta.
-          Position position = locationController.currentPosition.value!;
-          return Column(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Text(
-                  'Koordinat Lokasi Anda: \nLatitude: ${position.latitude} \nLongitude: ${position.longitude}',
-                  style: TextStyle(fontSize: 18),
+              Obx(
+                () => Text(
+                  "Titik Koordinat\nLintang: ${locationController.latitude.value}\nBujur: ${locationController.longitude.value}",
                   textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    color: Color(0xFF333333), 
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-              // Map widget bisa ditambahkan disini jika perlu
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () => locationController.getCurrentLocation(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF003366), // Warna Navy
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                ),
+                child: const Text(
+                  "Cari Lokasi",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () => locationController.openGoogleMaps(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF003366), // Warna Navy
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20),
+                ),
+                child: const Text(
+                  "Buka Google Maps",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
             ],
-          );
-        }
-      }),
+          ),
+        ),
+      ),
     );
-  }
-
-  Future<void> _checkPermission() async {
-    // Cek izin lokasi
-    PermissionStatus permission = await Permission.location.status;
-
-    if (permission.isDenied) {
-      // Jika izin belum diberikan, minta izin
-      permission = await Permission.location.request();
-    }
-
-    if (permission.isGranted) {
-      // Jika izin diberikan, lanjutkan untuk mengambil lokasi
-      _getCurrentLocation();
-    } else if (permission.isPermanentlyDenied) {
-      // Jika izin ditolak permanen, arahkan pengguna ke pengaturan untuk memberikan izin
-      openAppSettings();
-    } else {
-      // Tampilkan pesan atau penanganan lain jika izin tidak diberikan
-      print("Izin lokasi tidak diberikan");
-    }
-  }
-
-  Future<void> _getCurrentLocation() async {
-    try {
-      // Pastikan permission sudah diberikan
-      await _checkPermission();
-
-      // Mengambil posisi saat ini setelah izin diberikan
-      Position position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
-      );
-
-      // Update posisi pada controller
-      locationController.currentPosition.value = position;
-      locationController.initialPosition.value =
-          LatLng(position.latitude, position.longitude);
-    } catch (e) {
-      // Menangani error jika gagal mengambil lokasi
-      print('Error mengambil lokasi: $e');
-    }
   }
 }
